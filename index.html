@@ -36,6 +36,13 @@
     }
     md-list-item {
       margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    md-list-item button {
+      min-width: 24px;
+      padding: 0 8px;
     }
     .status {
       padding: 10px;
@@ -81,10 +88,22 @@
       </md-card-content>
     </md-card>
 
+    <!-- Country Code Selector -->
+    <md-input-container>
+      <label>Country Code</label>
+      <md-select ng-model="countryCode" placeholder="+27">
+        <md-option value="+27">+27 (South Africa)</md-option>
+        <md-option value="+1">+1 (USA)</md-option>
+        <md-option value="+44">+44 (UK)</md-option>
+        <md-option value="+91">+91 (India)</md-option>
+        <md-option value="+61">+61 (Australia)</md-option>
+      </md-select>
+    </md-input-container>
+
     <!-- Add Numbers -->
     <md-input-container>
-      <label>Enter numbers (one per line)</label>
-      <textarea ng-model="newNumbers" rows="5" placeholder="+276xxxxxxxx"></textarea>
+      <label>Enter numbers (one per line, without country code)</label>
+      <textarea ng-model="newNumbers" rows="5" placeholder="e.g. 761234567"></textarea>
     </md-input-container>
     <md-button class="md-raised md-primary" ng-click="addNumbers()">Add Numbers</md-button>
 
@@ -93,6 +112,9 @@
     <md-list>
       <md-list-item ng-repeat="number in numbers track by $index" class="fade">
         {{ number }}
+        <md-button class="md-icon-button md-warn" ng-click="removeNumber($index)" aria-label="Remove">
+          &times;
+        </md-button>
       </md-list-item>
     </md-list>
 
@@ -123,6 +145,7 @@
         $scope.smsStatus = '';
         $scope.smsSent = false;
         $scope.serviceAvailable = false;
+        $scope.countryCode = '+27'; // default
 
         // Check service availability
         async function checkService() {
@@ -145,13 +168,22 @@
         }
         checkService();
 
-        // Add numbers
+        // Add numbers with country code
         $scope.addNumbers = function() {
           if (!$scope.newNumbers) return;
-          const nums = $scope.newNumbers.split('\n').map(n => n.trim()).filter(Boolean);
+          const nums = $scope.newNumbers.split('\n')
+            .map(n => n.trim())
+            .filter(Boolean)
+            .map(n => $scope.countryCode + n.replace(/^0+/, '')); // prepend country code
           $scope.numbers = [...new Set([...$scope.numbers, ...nums])];
           localStorage.setItem('numbers', JSON.stringify($scope.numbers));
           $scope.newNumbers = '';
+        };
+
+        // Remove number
+        $scope.removeNumber = function(index) {
+          $scope.numbers.splice(index, 1);
+          localStorage.setItem('numbers', JSON.stringify($scope.numbers));
         };
 
         // Send SMS
